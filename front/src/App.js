@@ -117,7 +117,7 @@ class App extends Component {
               <AddNoteForm handleSave={this.handleSaveNote}/> :
               <EditNoteForm handleChange={this.handleOnChange} note={this.state.note} />
             }
-            <Websocket ref="socket" url='ws://localhost:8000/ws/notes'
+            <Websocket ref="socket" url='ws://127.0.0.1:8000/ws/notes'
             onMessage={this.handleData.bind(this)} />
           </Col>
         </Row>
