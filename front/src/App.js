@@ -3,6 +3,8 @@ import { Button, Container, Row, Col } from 'reactstrap';
 import ListNotes from './components/ListNotes';
 import { fetchNotes, fetchNote, updateNote, addNote} from './api';
 import AddNoteForm from './components/AddNoteForm';
+import Websocket from 'react-websocket';
+import EditNoteForm from './components/EditNoteForm';
 
 // var notes_temp = [
 //   {
@@ -28,6 +30,7 @@ class App extends Component {
 
     this.state = {
       notes: [],
+      note: {},
       current_note_id: 0,
       is_creating: true,
       is_fetching: true
@@ -37,6 +40,7 @@ class App extends Component {
     this.handleAddNote = this.handleAddNote.bind(this);
     this.getData = this.getData.bind(this);
     this.handleSaveNote = this.handleSaveNote.bind(this);
+    this.handleOnChange = this.handleOnChange.bind(this);
   }
 
   componentDidMount(){
@@ -48,9 +52,13 @@ class App extends Component {
     this.setState({notes: data});
   }
 
-  handleItemClick(id){
+  async handleItemClick(id){
+    let selected_note = await fetchNote(id);
     this.setState((prevState) => {
-      return { is_creating: false, current_note_id: id}
+      return { 
+        is_creating: false, 
+        current_note_id: id,
+        note: selected_note}
     })
   }
 
@@ -63,6 +71,27 @@ class App extends Component {
   async handleSaveNote(data){
     await addNote(data);
     await this.getData();
+  }
+
+  handleData(data){
+    let result = JSON.parse(data);
+    let current_note = this.state.note;
+    if(current_note.id === result.id){
+      this.setState({ note: result });
+    }
+  }
+
+  handleOnChange(e){
+    let content = e.target.value;
+    let current_note = this.state.note;
+    current_note.content = content;
+
+    this.setState({
+      note: current_note
+    });
+
+    const socket = this.refs.socket;
+    socket.state.ws.send(JSON.stringify(current_note));
   }
 
   render() {
@@ -86,8 +115,10 @@ class App extends Component {
             {
               this.state.is_creating ?
               <AddNoteForm handleSave={this.handleSaveNote}/> :
-              `Editing note with id: ${this.state.current_note_id}`
+              <EditNoteForm handleChange={this.handleOnChange} note={this.state.note} />
             }
+            <Websocket ref="socket" url='ws://localhost:8000/ws/notes'
+            onMessage={this.handleData.bind(this)} />
           </Col>
         </Row>
       </Container>

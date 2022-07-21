@@ -19,7 +19,7 @@ class NoteConsumer(WebsocketConsumer):
             self.channel_name
         )
     def receive(self, text_data):
-        text_data_json = json.load(text_data)
+        text_data_json = json.loads(text_data)
         title = text_data_json['title']
         content = text_data_json['content']
         id = text_data_json['id']
